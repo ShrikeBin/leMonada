@@ -10,3 +10,5 @@ wyniku testu.*
 ### Źródła:
 - https://dennybritz.com/posts/probability-monads-from-scratch/
 - https://github.com/dennybritz/probability-monads/blob/main/src/ProbabilityMonads.hs
+- https://en.wikipedia.org/wiki/Conditional_probability#Example
+- https://en.wikipedia.org/wiki/Monty_Hall_problem

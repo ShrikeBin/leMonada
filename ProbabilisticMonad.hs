@@ -33,14 +33,6 @@ sumProb xs = sum (map snd xs)
 -- Normalize to 1.0 --
 normProb :: [(a, Prob)] -> [(a, Prob)]
 normProb xs = [(x, p / q) | let q = sumProb xs, (x,p) <- xs]
-
--- A way of desciribing events --
--- Function that says if something is true (will be clear in a second) --
-type Event a = a -> Bool
-
--- Sum probabilities of a given event --
-evalDist :: Event a -> Dist a -> Prob
-evalDist eventFunc = sumProb . filter (eventFunc . fst) . unpackDist
 -- |===================================================================================| --
 
 
@@ -71,7 +63,7 @@ instance Applicative Dist where
 -- Time to do the funniest --
 instance Monad Dist where
     return = pure
-    
+
     -- (>>=) :: Dist a -> (a -> Dist b) -> Dist b
     (Dist xs) >>= f = Dist ( do
         (x, px) <- xs
@@ -94,12 +86,46 @@ bernouli p x y
 binomial :: Int -> Prob -> Dist Int
 binomial n p  = foldl1 (\x y -> dedupeDist (liftA2 (+) x y)) (replicate n (bernouli p 1 0))
 
--- Conditional Distribution with a condition function --
--- We have a Distribution, we apply a condtion on it, and normalize again --
-condDist :: (a -> Bool) -> Dist a -> Dist a
-condDist f (Dist xs) = (Dist . normProb) (filter (f . fst) xs)
+-- The number of trials until the first success  (Infinite so be carefull) --
+geometric :: Prob -> Dist Int
+geometric p
+    | p < 0.0 || p > 1.0 = error "p ∉ [0, 1.0]"
+    | otherwise = Dist [(n, (1 - p) ^ (n - 1) * p) | n <- [1 ..]]
+
+-- Negative Binomial (Also Infinite) --
+negativeBinomial :: Int -> Prob -> Dist Int
+negativeBinomial k p = foldl1 (\x y -> dedupeDist (liftA2 (+) x y)) (replicate k (geometric p))
+
+-- Poisson Distribution --
+poisson :: Double -> Dist Int
+poisson λ
+    | λ < 0 = error "λ must be +"
+    | otherwise = Dist [(k, (exp (-λ) * (λ ** fromIntegral k)) / fromIntegral (factorial k)) | k <- [0 ..]]
+    where
+      factorial n = product [1 .. n] `max` 1
 
 -- Fair, n'side Die
 die :: Int -> Dist Int
 die n = uniform [1 .. n]
+-- |===================================================================================| --
+
+
+-- CRUCIAL FUNCTIONS TO OPERATE ON PROBABILTY --
+-- |===================================================================================| --
+-- A way of desciribing events --
+-- Function that says if something is true (will be clear in a second) --
+type Event a = a -> Bool
+
+-- Sum probabilities of a given event --
+-- [example: evalDist (==2) (die 6)]
+-- [This will return the probability of rolling a 2 on a fair die]
+evalDist :: Event a -> Dist a -> Prob
+evalDist eventFunc = sumProb . filter (eventFunc . fst) . unpackDist
+
+-- Conditional Distribution with a condition function --
+-- We have a Distribution, we apply a condtion on it, and normalize again --
+-- [example condDist (==2) (die 6)]
+-- [This will return a distribution of rolling a 2 on a fair die, which is just 1.0]
+condDist :: (a -> Bool) -> Dist a -> Dist a
+condDist f (Dist xs) = (Dist . normProb) (filter (f . fst) xs)
 -- |===================================================================================| --
