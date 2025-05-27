@@ -71,6 +71,7 @@ instance Applicative Dist where
 -- Time to do the funniest --
 instance Monad Dist where
     return = pure
+    
     -- (>>=) :: Dist a -> (a -> Dist b) -> Dist b
     (Dist xs) >>= f = Dist ( do
         (x, px) <- xs
