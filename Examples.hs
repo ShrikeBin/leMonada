@@ -24,7 +24,7 @@ example2 n = dedupeDist $ go 0 n
 -- second attempt: non-recursive, still exponential
 example3 :: Int -> Dist Int
 example3 n = dedupeDist $ do
-    steps <- replicateM n (bernouli 0.5 (-1) 1)
+    steps <- replicateM n (bernouli 0.5 (-1) 1) -- expands to something like: step1 <- bernouli, step2 <- bernouli, step3 <- bernouli
     return (sum steps)
 
 -- third attempt: we remember that stochastic process on Z
