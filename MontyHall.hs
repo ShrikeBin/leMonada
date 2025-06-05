@@ -13,7 +13,7 @@ import ProbabilisticMonad
 -- | in the (>>=) operator.
 
 montyHall :: Dist String
-montyHall = do
+montyHall = dedupeDist $ do
     let doors = [1, 2, 3]
     win <- uniform doors
     pick <- uniform doors
