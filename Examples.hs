@@ -14,6 +14,6 @@ example2 :: Int -> Dist Int
 example2 n = dedupeDist $ go 0 n
     where
         go pos 0 = return pos
-        go pos n = do
+        go pos m = do
             dir <- bernouli 0.5 (-1) 1
-            go (pos + dir) (n - 1)
+            go (pos + dir) (m - 1)
