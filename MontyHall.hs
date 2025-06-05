@@ -6,16 +6,26 @@ import ProbabilisticMonad
 -- | IDK WHY IT WORK YET
 doors = [1, 2, 3] :: [Int]
 
-montyHallSwitch :: Prob
-montyHallSwitch = evalDist id $ do
+montyHall :: Dist String
+montyHall = do
     car <- uniform doors
     pick <- uniform doors
-    open <- uniform (filter (\door -> door /= pick && door /= car) doors)
-    let switch = head (filter (\door -> door /= pick && door /= open) doors)
-    return (switch == car) -- Probability of winning if you switch
+    open <- uniform $ filter (\door -> door /= pick && door /= car) doors
+    let switch = head $ filter (\door -> door /= pick && door /= open) doors
+    return $ if switch == car
+        then "switch"
+        else "stay"
 
-montyHallStay :: Prob
-montyHallStay = evalDist id $ do
-    car <- uniform doors
-    pick <- uniform doors
-    return (pick == car) -- Probability of winning if you stay
+-- montyHallSwitch :: Prob
+-- montyHallSwitch = evalDist id $ do
+--     car <- uniform doors
+--     pick <- uniform doors
+--     open <- uniform (filter (\door -> door /= pick && door /= car) doors)
+--     let switch = head (filter (\door -> door /= pick && door /= open) doors)
+--     return (switch == car) -- Probability of winning if you switch
+
+-- montyHallStay :: Prob
+-- montyHallStay = evalDist id $ do
+--     car <- uniform doors
+--     pick <- uniform doors
+--     return (pick == car) -- Probability of winning if you stay
