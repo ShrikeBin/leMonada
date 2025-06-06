@@ -48,7 +48,8 @@ recognizeDist dist
     | isDist dist (binomial n (x ** (1 / fromIntegral n))) = "Binomial"
     | otherwise = "Unknown"
     where
-        isDist (Dist as) (Dist bs) = foldl (\q ((_, a), (_,b)) -> q && (a == b)) True (zip as bs)
+        epsilon = 1e-8 -- floating point precision
+        isDist (Dist as) (Dist bs) = foldl (\q ((_, a), (_,b)) -> q && (abs (a - b) < epsilon)) True (zip as bs)
         ((_,x):xs) = unpackDist dist
         n = length xs
 
@@ -57,16 +58,17 @@ example2 :: String
 example2 = recognizeDist $ stochastic2 10 
 
 -- Simulation of a station receiving messages with
--- a certain probability p
-station :: Prob -> Dist Int
-station p = try 1
+-- a certain probability p.
+-- Wait only n - time to not wait forever
+station :: Prob -> Int -> Dist Int
+station p n = Dist . take n . unpackDist $ try 1 n
     where
-        try n = do
+        try _ 0 = do return (n+1)
+        try t k = do
             receive <- bernouli p True False
-            if receive
-                then return n
-                else try (n+1)
+            if receive then return t
+            else try (t+1) (k-1)
 
 -- Check if station is picking up messages with geometric time
 example3 :: String
-example3 = recognizeDist $ (Dist . take 100 . unpackDist) $ station 0.7
+example3 = recognizeDist $ station 0.3 10
