@@ -72,3 +72,57 @@ station p n = Dist . take n . unpackDist $ try 1 n
 -- Check if station is picking up messages with geometric time
 example3 :: String
 example3 = recognizeDist $ station 0.3 10
+
+
+-- Central Limit Theorem Example
+-- presidential election: candidates N and T
+-- We want to estimate fraction p of people supporting N
+-- We ask randomly chosem people
+-- We want to have probability >= 0.95 of being wrong by <= 0.05
+
+-- p is true fraction of people supporting N
+pollSample :: Int -> Prob -> Dist Int
+pollSample n p = binomial n p
+
+-- Using CLT approximation
+confidenceInterval :: Int -> Int -> Prob -> (Prob, Prob)
+confidenceInterval n success confidence = (lower, upper)
+    where
+        p' = fromIntegral success / fromIntegral n
+        z = 1.96
+        margin = z * sqrt (p' * (1 - p') / fromIntegral n)
+        lower = max 0 (p' - margin)
+        upper = min 1 (p' + margin)
+
+
+-- returns distribution of calculated proportion
+electionPoll :: Int -> Prob -> Dist Prob
+electionPoll n trueP = do
+    supporters <- pollSample n trueP
+    let estimate = fromIntegral supporters / fromIntegral n
+    return estimate
+
+-- check if we're within 0.05 of true probability
+checkAccuracy :: Int -> Prob -> Prob
+checkAccuracy n trueP =
+    evalDist (\estimate -> abs (estimate - trueP) <= 0.05) (electionPoll n trueP)
+
+-- Try different values of n
+findSampleSize :: Prob -> Int
+findSampleSize trueP = head [n | n <- [10,20 .. 1000], checkAccuracy n trueP >= 0.95]
+
+-- Search for sample size based on probability
+example4 :: Double -> Int
+example4 a = findSampleSize a
+
+-- Show the distribution of p' based on true p and sample size
+example5 :: Double -> Int -> Dist Prob
+example5 x n = dedupeDist $ electionPoll n x
+
+-- calculate theoretical sample size based on central limit theorem
+theoreticalSampleSize :: Prob -> Int
+theoreticalSampleSize trueP = ceiling $ (1.96^2 * trueP * (1 - trueP)) / (0.05^2)
+
+-- Compare the sample size found by simulation and theoretical sample size
+example6 :: Double -> (Int, Int)
+example6 trueP = (findSampleSize trueP, theoreticalSampleSize trueP)
