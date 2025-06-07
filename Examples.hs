@@ -126,3 +126,33 @@ theoreticalSampleSize trueP = ceiling $ (1.96^2 * trueP * (1 - trueP)) / (0.05^2
 -- Compare the sample size found by simulation and theoretical sample size
 example6 :: Double -> (Int, Int)
 example6 trueP = (findSampleSize trueP, theoreticalSampleSize trueP)
+
+birthdayParadox :: Int -> Prob
+birthdayParadox n 
+    | n > 365 = 1.0  -- pigeonhole principle
+    | n <= 1 = 0.0
+    | otherwise = 1 - product [fromIntegral (365 - i) / 365 | i <- [0..(n-1)]]
+
+-- example of birthday paradox
+example7 :: Int -> Prob
+example7 n = birthdayParadox n
+
+-- Weather forecaster
+-- if today is sunny, then tomorrow is sunny with probability 0.6, cloudy: 0.3 rainy: 0.1
+-- if today is cloudy, then tomorrow is sunny with probability 0.3, cloudy 0.4, rainy: 0.3
+-- if today is rainy, then tomorrow is sunny with probability 0.2, cloudy: 0.3, rainy: 0.5
+weather :: String -> Dist String
+weather "sunny" = Dist [("sunny", 0.6), ("cloudy", 0.3), ("rainy", 0.1)]
+weather "cloudy" = Dist [("sunny", 0.3), ("cloudy", 0.4), ("rainy", 0.3)]
+weather "rainy" = Dist [("sunny", 0.2), ("cloudy", 0.3), ("rainy", 0.5)]
+
+-- weather forecast
+weatherForecast :: String -> Dist [String]
+weatherForecast init_weather = do
+    day1 <- weather init_weather
+    day2 <- weather day1
+    day3 <- weather day2
+    return [init_weather, day1, day2, day3]
+
+example8 :: String -> Dist [String]
+example8 init_weather = weatherForecast init_weather
