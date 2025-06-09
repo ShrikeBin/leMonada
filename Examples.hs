@@ -40,8 +40,8 @@ recognizeDist :: Dist a -> String
 recognizeDist (Dist []) = error "Empty Distribution"
 recognizeDist dist
     -- infinite - we're checking only a few first elements
-    | isDist dist ((Dist . take 10000 . unpackDist) (geometric x)) = "Geometric"
-    -- | isDist dist ((Dist . take 10000 . unpackDist) (negativeBinomial ))
+    | isDist dist ((Dist . take 1000 . unpackDist) (geometric x)) = "Geometric"
+    | isDist dist ((Dist . take 1000 . unpackDist) (negativeBinomial k p)) = "Negative Binomial"
     -- finite
     | isDist dist (bernouli x 0 1) = "Bernouli"
     | isDist dist (uniform [0 .. n]) = "Uniform"
@@ -51,6 +51,8 @@ recognizeDist dist
         epsilon = 1e-8 -- floating point precision
         isDist (Dist as) (Dist bs) = foldl (\q ((_, a), (_,b)) -> q && (abs (a - b) < epsilon)) True (zip as bs)
         ((_,x):xs) = unpackDist dist
+        k = (1+) $ length . takeWhile ((==0) . snd) $ unpackDist dist
+        p = (1-) $ snd (unpackDist dist !! (k-1)) ** (1 / fromIntegral k)
         n = length xs
 
 -- Check if a stochastic process is really a binomial distribution

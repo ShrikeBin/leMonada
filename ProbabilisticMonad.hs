@@ -94,7 +94,14 @@ geometric p
 
 -- Negative Binomial (Also Infinite) --
 negativeBinomial :: Int -> Prob -> Dist Int
-negativeBinomial k p = foldl1 (\x y -> dedupeDist (liftA2 (+) x y)) (replicate k (geometric p))
+-- negativeBinomial k p = foldl (\x y -> dedupeDist (liftA2 (+) x y)) (replicate k (geometric p))
+negativeBinomial k p
+    | k < 1 || p < 0.0 || p > 1.0 = error "p ∉ [0, 1.0] or k ∉ N+"
+    | otherwise = Dist $ [(n, 0.0) | n <- [1 .. k-1]] ++ [(n, fromIntegral (choose (n-1) (k-1)) * p ^ k * (1-p) ^ (n-k)) | n <- [k ..]]
+    where
+        choose n 0 = 1
+        choose 0 m = 0
+        choose n m = choose (n-1) (m-1) * n `div` m
 
 -- Poisson Distribution --
 poisson :: Double -> Dist Int
