@@ -129,15 +129,6 @@ theoreticalSampleSize trueP = ceiling $ (1.96^2 * trueP * (1 - trueP)) / (0.05^2
 example6 :: Double -> (Int, Int)
 example6 trueP = (findSampleSize trueP, theoreticalSampleSize trueP)
 
-birthdayParadox :: Int -> Prob
-birthdayParadox n 
-    | n > 365 = 1.0  -- pigeonhole principle
-    | n <= 1 = 0.0
-    | otherwise = 1 - product [fromIntegral (365 - i) / 365 | i <- [0..(n-1)]]
-
--- example of birthday paradox
-example7 :: Int -> Prob
-example7 n = birthdayParadox n
 
 -- Weather forecaster
 -- if today is sunny, then tomorrow is sunny with probability 0.6, cloudy: 0.3 rainy: 0.1
@@ -156,5 +147,26 @@ weatherForecast init_weather = do
     day3 <- weather day2
     return [init_weather, day1, day2, day3]
 
-example8 :: String -> Dist [String]
-example8 init_weather = weatherForecast init_weather
+example7 :: String -> Dist [String]
+example7 init_weather = weatherForecast init_weather
+
+offspring :: Dist Int
+offspring = Dist [ (0, 0.2), (1, 0.5), (2, 0.3)]
+
+-- Population growth model after 2 generations
+populationGrowth :: Dist Int
+populationGrowth = do
+    gen1 <- offspring
+    gen2 <- case gen1 of
+        0 -> return 0
+        1 -> offspring
+        2 -> do
+            child1 <- offspring
+            child2 <- offspring
+            return (child1 + child2)
+        _ -> return 0
+    return gen2
+
+-- Example of population growth
+example8 :: Dist Int
+example8 = populationGrowth
